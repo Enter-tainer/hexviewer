@@ -10,8 +10,10 @@ use rustyline::{Cmd, CompletionType, Config, Context, EditMode, Editor, KeyEvent
 use rustyline_derive::Helper;
 
 use colored::*;
+use evalexpr::Context as EvalContext;
 use evalexpr::*;
-
+mod bin;
+mod hex;
 #[derive(Helper)]
 struct MyHelper {
     completer: FilenameCompleter,
@@ -100,6 +102,36 @@ fn main() -> rustyline::Result<()> {
     rl.bind_sequence(KeyEvent::alt('n'), Cmd::HistorySearchForward);
     rl.bind_sequence(KeyEvent::alt('p'), Cmd::HistorySearchBackward);
     let mut context = HashMapContext::new();
+    context
+        .set_function(
+            "hex".to_string(),
+            Function::new(Box::new(|arg| {
+                if let Ok(int) = arg.as_int() {
+                    Ok(Value::String(hex::print_hex(int)))
+                } else if let Ok(_float) = arg.as_float() {
+                    Err(EvalexprError::expected_int(arg.clone()))
+                // Ok(Value::String(hex::print_hex(float)))
+                } else {
+                    Err(EvalexprError::expected_number(arg.clone()))
+                }
+            })),
+        )
+        .unwrap();
+    context
+        .set_function(
+            "bin".to_string(),
+            Function::new(Box::new(|arg| {
+                if let Ok(int) = arg.as_int() {
+                    Ok(Value::String(bin::print_bin(int)))
+                } else if let Ok(_float) = arg.as_float() {
+                    Err(EvalexprError::expected_int(arg.clone()))
+                // Ok(Value::String(hex::print_hex(float)))
+                } else {
+                    Err(EvalexprError::expected_number(arg.clone()))
+                }
+            })),
+        )
+        .unwrap();
     loop {
         let p = "❯ ".green();
         rl.helper_mut().expect("No helper").colored_prompt = p.to_string();
@@ -110,8 +142,10 @@ fn main() -> rustyline::Result<()> {
                 let e = eval_with_context_mut(&line, &mut context);
                 if let Err(ref x) = e {
                     println!("{}", format!("{}", x).yellow());
+                    continue;
                 }
                 let x = e.unwrap();
+                println!("{}", format!("{}", x).bold());
             }
             Err(ReadlineError::Interrupted) => {
                 continue;
