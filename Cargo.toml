@@ -3,7 +3,8 @@ name = "hexviewer"
 version = "0.1.0"
 authors = ["mgt <mgt@oi-wiki.org>"]
 edition = "2018"
-
+repository = "https://github.com/Enter-tainer/hexviewer"
+description = "simple repl to view binary and hex representation of an integer"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
