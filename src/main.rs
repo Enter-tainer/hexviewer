@@ -10,6 +10,8 @@ use rustyline::{Cmd, CompletionType, Config, Context, EditMode, Editor, KeyEvent
 use rustyline_derive::Helper;
 
 use colored::*;
+use evalexpr::*;
+
 #[derive(Helper)]
 struct MyHelper {
     completer: FilenameCompleter,
@@ -97,6 +99,7 @@ fn main() -> rustyline::Result<()> {
     rl.set_helper(Some(h));
     rl.bind_sequence(KeyEvent::alt('n'), Cmd::HistorySearchForward);
     rl.bind_sequence(KeyEvent::alt('p'), Cmd::HistorySearchBackward);
+    let mut context = HashMapContext::new();
     loop {
         let p = "❯ ".green();
         rl.helper_mut().expect("No helper").colored_prompt = p.to_string();
@@ -104,7 +107,11 @@ fn main() -> rustyline::Result<()> {
         match readline {
             Ok(line) => {
                 rl.add_history_entry(line.as_str());
-                println!("Line: {}", line);
+                let e = eval_with_context_mut(&line, &mut context);
+                if let Err(ref x) = e {
+                    println!("{}", format!("{}", x).yellow());
+                }
+                let x = e.unwrap();
             }
             Err(ReadlineError::Interrupted) => {
                 continue;
